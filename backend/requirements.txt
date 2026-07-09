@@ -6,3 +6,5 @@ motor
 pymongo
 python-jose[cryptography]
 passlib[bcrypt]
+authlib
+httpx
