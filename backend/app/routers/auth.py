@@ -63,3 +63,15 @@ async def login(credentials: UserLogin):
         
     access_token = create_access_token(subject=user.id, role=user.role)
     return Token(access_token=access_token)
+
+from app.services.auth_service import get_current_user
+from app.core.permissions import allow_admin
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: UserDoc = Depends(get_current_user)):
+    return current_user
+
+@router.get("/admin/test")
+async def admin_test(admin_user: UserDoc = Depends(allow_admin)):
+    return {"message": "admin test ok", "user_id": admin_user.id}
+
