@@ -1,10 +1,11 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import HomePage from './components/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
+import AthleteDashboard from './pages/AthleteDashboard';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -55,9 +56,6 @@ function OAuthCallbackHandler() {
   );
 }
 
-// Wrapper for OAuth callback component since we need useNavigate inside it
-import { useNavigate } from 'react-router-dom';
-
 function App() {
   return (
     <AuthProvider>
@@ -77,6 +75,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/athlete-dashboard/:athleteId"
+            element={
+              <ProtectedRoute>
+                <AthleteDashboard />
               </ProtectedRoute>
             }
           />
