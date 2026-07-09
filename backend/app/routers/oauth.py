@@ -13,7 +13,9 @@ async def google_login(request: Request):
     redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@router.get("/callback", response_model=Token)
+from fastapi.responses import RedirectResponse
+
+@router.get("/callback")
 async def google_callback(request: Request):
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -59,4 +61,7 @@ async def google_callback(request: Request):
         )
         
     access_token = create_access_token(subject=user.id, role=user.role)
-    return Token(access_token=access_token)
+    
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
+
