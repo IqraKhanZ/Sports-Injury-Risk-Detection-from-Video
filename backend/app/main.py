@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from app.database import init_db
-from app.routers import auth, oauth
+from app.routers import auth, oauth, athlete
 
 app = FastAPI(
     title="Sports Injury Risk Detection API",
@@ -23,6 +23,7 @@ async def startup_db_client():
 # Include routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(oauth.router, prefix="/api")
+app.include_router(athlete.router, prefix="/api")
 
 @app.get("/health")
 def health_check():
