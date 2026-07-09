@@ -17,3 +17,7 @@ def get_db():
 async def init_db():
     # Unique index for user email
     await db.users.create_index("email", unique=True)
+    # Indexes for videos queries
+    await db.videos.create_index("athlete_id")
+    await db.videos.create_index("status")
+
