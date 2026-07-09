@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function HomePage() {
   return (
@@ -16,10 +17,10 @@ export default function HomePage() {
               Aegis Motion
             </span>
           </div>
-          <nav className="flex gap-6 text-sm font-medium text-slate-400">
+          <nav className="flex gap-6 text-sm font-medium text-slate-400 items-center">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#analysis" className="hover:text-white transition-colors">Analysis</a>
-            <a href="#dashboard" className="hover:text-white transition-colors">Dashboard</a>
+            <Link to="/login" className="hover:text-white transition-colors">Sign In</Link>
+            <Link to="/register" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors">Sign Up</Link>
           </nav>
         </div>
       </header>
@@ -39,12 +40,12 @@ export default function HomePage() {
           Upload video feeds of training sessions or game tape. Our computer vision models analyze movement biomechanics to flag high-risk motion patterns in real-time.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <button className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white transition-all shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5">
+          <Link to="/dashboard" className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white transition-all shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 text-center">
             Upload Video for Analysis
-          </button>
-          <button className="px-8 py-4 rounded-xl border border-slate-700 hover:border-slate-600 font-semibold bg-slate-900/50 hover:bg-slate-900 text-white transition-all">
+          </Link>
+          <Link to="/login" className="px-8 py-4 rounded-xl border border-slate-700 hover:border-slate-600 font-semibold bg-slate-900/50 hover:bg-slate-900 text-white transition-all text-center">
             View Live Demo
-          </button>
+          </Link>
         </div>
       </main>
 
