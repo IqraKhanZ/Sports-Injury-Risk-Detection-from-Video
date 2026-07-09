@@ -1,30 +1,19 @@
 import os
+from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
-# Load environment variables
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    # Fallback to local postgres default for development if env is not set
-    DATABASE_URL = "postgresql://postgres:password@localhost:5432/sports_injury"
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017/sports_injury")
 
-# Create database engine
-engine = create_engine(DATABASE_URL)
+# Async Motor Client
+client = AsyncIOMotorClient(MONGODB_URL)
+db_name = MONGODB_URL.split("/")[-1].split("?")[0] or "sports_injury"
+db = client[db_name]
 
-# Create session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Declarative base class for models
-Base = declarative_base()
-
-# Database session dependency
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    return db
+
+async def init_db():
+    # Unique index for user email
+    await db.users.create_index("email", unique=True)

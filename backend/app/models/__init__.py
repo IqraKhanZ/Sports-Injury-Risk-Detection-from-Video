@@ -1,5 +1,4 @@
-from app.database import Base
-from app.models.user import User, UserRole
-from app.models.athlete import Athlete
+from app.models.user import UserDoc, UserRole
+from app.models.athlete import AthleteDoc
 
-__all__ = ["Base", "User", "UserRole", "Athlete"]
+__all__ = ["UserDoc", "UserRole", "AthleteDoc"]

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.database import init_db
 
 app = FastAPI(
     title="Sports Injury Risk Detection API",
@@ -6,6 +7,11 @@ app = FastAPI(
     version="0.1.0"
 )
 
+@app.on_event("startup")
+async def startup_db_client():
+    await init_db()
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
