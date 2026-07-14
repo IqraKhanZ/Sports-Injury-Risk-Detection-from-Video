@@ -13,6 +13,13 @@ router = APIRouter(prefix="/athletes", tags=["Athletes"])
 # Staff checker helper
 allow_staff = RoleChecker([UserRole.ADMIN, UserRole.COACH])
 
+@router.get("/", response_model=List[AthleteDoc])
+async def list_athletes(current_user: UserDoc = Depends(get_current_user)):
+    if current_user.role == UserRole.ATHLETE:
+        profile = await AthleteService.get_by_user_id(current_user.id)
+        return [profile] if profile else []
+    return await AthleteService.list_all_profiles()
+
 @router.post("/", response_model=AthleteDoc, status_code=status.HTTP_201_CREATED)
 async def create_athlete(data: AthleteCreate, current_user: UserDoc = Depends(allow_staff)):
     # Check if profile already exists for this user_id

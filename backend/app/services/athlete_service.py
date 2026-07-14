@@ -62,3 +62,13 @@ class AthleteService:
             {"$push": {"training_loads": entry.model_dump()}}
         )
         return result.modified_count > 0
+
+    @staticmethod
+    async def list_all_profiles() -> List[AthleteDoc]:
+        db = get_db()
+        cursor = db.athletes.find({})
+        profiles = []
+        async for doc in cursor:
+            profiles.append(AthleteDoc(**doc))
+        return profiles
+

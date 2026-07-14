@@ -21,8 +21,18 @@ export const athleteApi = {
     return response.data;
   },
 
-  async addTrainingLoad(athleteId, trainingData) {
-    const response = await api.post(`/athletes/${athleteId}/training-load`, trainingData);
+  async addTrainingLoad(athlete_id, trainingData) {
+    const response = await api.post(`/athletes/${athlete_id}/training-load`, trainingData);
+    return response.data;
+  },
+
+  async listAthletes() {
+    const response = await api.get('/athletes/');
+    return response.data;
+  },
+
+  async createAthlete(data) {
+    const response = await api.post('/athletes/', data);
     return response.data;
   },
 };
