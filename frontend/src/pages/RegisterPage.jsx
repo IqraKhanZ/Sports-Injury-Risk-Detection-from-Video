@@ -129,7 +129,7 @@ export default function RegisterPage() {
         <button
           onClick={() => {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-            window.location.href = `${API_URL}/api/auth/google/login`;
+            window.location.href = `${API_URL}/api/auth/google/login?role=${role}`;
           }}
           className="w-full py-4 border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 rounded-xl flex items-center justify-center gap-3 transition-colors text-sm font-semibold"
         >

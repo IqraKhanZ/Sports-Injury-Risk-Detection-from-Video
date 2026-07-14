@@ -1,5 +1,6 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from typing import Optional
 from app.core.oauth import oauth
 from app.database import get_db
 from app.core.security import create_access_token
@@ -9,7 +10,8 @@ from app.schemas.auth import Token
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth2"])
 
 @router.get("/login")
-async def google_login(request: Request):
+async def google_login(request: Request, role: Optional[str] = "athlete"):
+    request.session["oauth_role"] = role
     redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -44,14 +46,24 @@ async def google_callback(request: Request):
     user_dict = await db.users.find_one({"email": email})
     
     if not user_dict:
-        # Create a new user with athlete role
+        # Retrieve selected role from session, validate and fallback to athlete if invalid
+        role_str = request.session.pop("oauth_role", "athlete")
+        try:
+            user_role = UserRole(role_str)
+        except ValueError:
+            user_role = UserRole.ATHLETE
+
+        # Create a new user with the selected role
         user_doc = UserDoc(
             email=email,
             hashed_password="",  # OAuth users do not have a local password
-            role=UserRole.ATHLETE
+            role=user_role
         )
         await db.users.insert_one(user_doc.model_dump())
         user_dict = user_doc.model_dump()
+    else:
+        # Ensure session is cleaned up even if user already exists
+        request.session.pop("oauth_role", None)
         
     user = UserDoc(**user_dict)
     if not user.is_active:
@@ -64,4 +76,3 @@ async def google_callback(request: Request):
     
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
-
