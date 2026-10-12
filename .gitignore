@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.pytest_cache/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+
+# Environment Variables
+.env
+.env.local
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Storage & Temporary Uploads
+backend/storage/processed/*
+!backend/storage/processed/.gitkeep
+backend/app/temp_uploads/*
+!backend/app/temp_uploads/.gitkeep
+backend/tests/__pycache__/
+backend/app/__pycache__/
+backend/app/*/__pycache__/
