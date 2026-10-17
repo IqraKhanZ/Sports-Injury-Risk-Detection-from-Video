@@ -403,77 +403,98 @@ async def upload_video(
         num_poses=1
     )
     MAX_FRAMES = 120
-    with PoseLandmarker.create_from_options(options) as landmarker:
-        for frame in reader:
-            if frame_idx >= MAX_FRAMES:
-                break
-            # Resize frame to downsampled dimensions for fast processing
-            resized_frame = cv2.resize(frame, (target_width, target_height))
-            
-            # Convert RGB to BGR for OpenCV drawing utility functions
-            bgr_frame = cv2.cvtColor(resized_frame, cv2.COLOR_RGB2BGR)
+    try:
+        with PoseLandmarker.create_from_options(options) as landmarker:
+            for frame in reader:
+                if frame_idx >= MAX_FRAMES:
+                    break
+                # Resize frame to downsampled dimensions for fast processing
+                resized_frame = cv2.resize(frame, (target_width, target_height))
+                
+                # Convert RGB to BGR for OpenCV drawing utility functions
+                bgr_frame = cv2.cvtColor(resized_frame, cv2.COLOR_RGB2BGR)
 
-            # Run MediaPipe Pose on the frame (Tasks API requires timestamp in ms)
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=resized_frame)
-            timestamp_ms = int(frame_idx * (1000.0 / fps))
-            result = landmarker.detect_for_video(mp_image, timestamp_ms)
+                # Run MediaPipe Pose on the frame (Tasks API requires timestamp in ms)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=resized_frame)
+                timestamp_ms = int(frame_idx * (1000.0 / fps))
+                result = landmarker.detect_for_video(mp_image, timestamp_ms)
 
-            # Draw real skeleton dots & lines on top of the actual athlete & extract angles
-            if result.pose_landmarks and len(result.pose_landmarks) > 0:
-                lms = result.pose_landmarks[0]
-                _draw_pose_landmarks(bgr_frame, lms, target_width, target_height)
+                # Draw real skeleton dots & lines on top of the actual athlete & extract angles
+                if result.pose_landmarks and len(result.pose_landmarks) > 0:
+                    lms = result.pose_landmarks[0]
+                    _draw_pose_landmarks(bgr_frame, lms, target_width, target_height)
 
-                # Extract kinematic angles if landmarks are present
-                if len(lms) >= 33:
-                    ps_l, ps_r = lms[11], lms[12]
-                    ph_l, ph_r = lms[23], lms[24]
-                    pk_l, pk_r = lms[25], lms[26]
-                    pa_l, pa_r = lms[27], lms[28]
+                    # Extract kinematic angles if landmarks are present
+                    if len(lms) >= 33:
+                        ps_l, ps_r = lms[11], lms[12]
+                        ph_l, ph_r = lms[23], lms[24]
+                        pk_l, pk_r = lms[25], lms[26]
+                        pa_l, pa_r = lms[27], lms[28]
 
-                    # 3D Knee Flexion
-                    fl_r = _calc_angle_3d(ph_r, pk_r, pa_r)
-                    fl_l = _calc_angle_3d(ph_l, pk_l, pa_l)
-                    frame_knee_flexion_r.append(fl_r)
-                    frame_knee_flexion_l.append(fl_l)
+                        # 3D Knee Flexion
+                        fl_r = _calc_angle_3d(ph_r, pk_r, pa_r)
+                        fl_l = _calc_angle_3d(ph_l, pk_l, pa_l)
+                        frame_knee_flexion_r.append(fl_r)
+                        frame_knee_flexion_l.append(fl_l)
 
-                    # 2D Knee Valgus (coronal deviation from 180 deg straight limb)
-                    frame_valgus_r.append(abs(180.0 - _calc_angle_2d(ph_r, pk_r, pa_r)))
-                    frame_valgus_l.append(abs(180.0 - _calc_angle_2d(ph_l, pk_l, pa_l)))
+                        # 2D Knee Valgus (coronal deviation from 180 deg straight limb)
+                        frame_valgus_r.append(abs(180.0 - _calc_angle_2d(ph_r, pk_r, pa_r)))
+                        frame_valgus_l.append(abs(180.0 - _calc_angle_2d(ph_l, pk_l, pa_l)))
 
-                    # Trunk lean and pelvic tilt
-                    sh_mx = (ps_l.x + ps_r.x) / 2.0
-                    sh_my = (ps_l.y + ps_r.y) / 2.0
-                    hi_mx = (ph_l.x + ph_r.x) / 2.0
-                    hi_my = (ph_l.y + ph_r.y) / 2.0
-                    frame_trunk_lean.append(float(np.degrees(np.arctan2(
-                        abs(sh_mx - hi_mx), abs(sh_my - hi_my) + 1e-6
-                    ))))
-                    frame_pelvic_tilt.append(float(np.degrees(np.arctan2(
-                        abs(ph_r.y - ph_l.y), abs(ph_r.x - ph_l.x) + 1e-6
-                    ))))
+                        # Trunk lean and pelvic tilt
+                        sh_mx = (ps_l.x + ps_r.x) / 2.0
+                        sh_my = (ps_l.y + ps_r.y) / 2.0
+                        hi_mx = (ph_l.x + ph_r.x) / 2.0
+                        hi_my = (ph_l.y + ph_r.y) / 2.0
+                        frame_trunk_lean.append(float(np.degrees(np.arctan2(
+                            abs(sh_mx - hi_mx), abs(sh_my - hi_my) + 1e-6
+                        ))))
+                        frame_pelvic_tilt.append(float(np.degrees(np.arctan2(
+                            abs(ph_r.y - ph_l.y), abs(ph_r.x - ph_l.x) + 1e-6
+                        ))))
 
-                    # Bilateral asymmetry
-                    asym = (abs(fl_r - fl_l) / max(fl_r, fl_l, 1.0)) * 100.0
-                    frame_asymmetry.append(asym)
+                        # Bilateral asymmetry
+                        asym = (abs(fl_r - fl_l) / max(fl_r, fl_l, 1.0)) * 100.0
+                        frame_asymmetry.append(asym)
 
-                    # Dynamic Stride Length & COM Drift
-                    ank_d = np.sqrt((pa_r.x - pa_l.x)**2 + (pa_r.y - pa_l.y)**2 + (pa_r.z - pa_l.z)**2)
-                    torso_h = max(0.1, abs((ps_l.y + ps_r.y) / 2.0 - hi_my))
-                    frame_stride_m.append((ank_d / torso_h) * (athlete_height_m * 0.45))
-                    frame_com_x.append(hi_mx)
+                        # Dynamic Stride Length & COM Drift
+                        ank_d = np.sqrt((pa_r.x - pa_l.x)**2 + (pa_r.y - pa_l.y)**2 + (pa_r.z - pa_l.z)**2)
+                        torso_h = max(0.1, abs((ps_l.y + ps_r.y) / 2.0 - hi_my))
+                        frame_stride_m.append((ank_d / torso_h) * (athlete_height_m * 0.45))
+                        frame_com_x.append(hi_mx)
 
-                    if len(lms) > 14:
-                        frame_shoulder_abd_r.append(_calc_angle_3d(ph_r, ps_r, lms[14]))
-                    if len(lms) > 32:
-                        frame_ankle_inv.append(_calc_angle_2d(pk_r, pa_r, lms[32]))
-                    frame_lumbar_flex.append(_calc_angle_3d(ps_r, ph_r, pk_r))
+                        if len(lms) > 14:
+                            frame_shoulder_abd_r.append(_calc_angle_3d(ph_r, ps_r, lms[14]))
+                        if len(lms) > 32:
+                            frame_ankle_inv.append(_calc_angle_2d(pk_r, pa_r, lms[32]))
+                        frame_lumbar_flex.append(_calc_angle_3d(ps_r, ph_r, pk_r))
 
-            rgb_out_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
-            writer.append_data(rgb_out_frame)
-            frame_idx += 1
+                rgb_out_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
+                writer.append_data(rgb_out_frame)
+                frame_idx += 1
+    except Exception as pose_err:
+        print(f"[MediaPipe Warning] Pose estimation error: {pose_err}. Using fallback frame writer.")
+        try:
+            reader.close()
+            reader = imageio.get_reader(temp_input_path)
+            frame_idx = 0
+            for frame in reader:
+                if frame_idx >= MAX_FRAMES:
+                    break
+                resized_frame = cv2.resize(frame, (target_width, target_height))
+                writer.append_data(resized_frame)
+                frame_idx += 1
+        except Exception as fb_err:
+            print(f"[Fallback Writer Error]: {fb_err}")
 
-    reader.close()
-    writer.close()
+    try:
+        reader.close()
+    except Exception:
+        pass
+    try:
+        writer.close()
+    except Exception:
+        pass
 
     # Clean up original input video
     if os.path.exists(temp_input_path):
