@@ -24,14 +24,14 @@ class Settings:
     # --- Google OAuth2 ---
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "")
+    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "").rstrip("/")
 
     # --- AI / External APIs ---
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
     # --- Service URLs ---
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "")
-    VITE_API_URL: str = os.getenv("VITE_API_URL", "")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "").rstrip("/")
+    VITE_API_URL: str = os.getenv("VITE_API_URL", "").rstrip("/")
 
     # --- Server ---
     PORT: int = int(os.getenv("PORT", 8000))
