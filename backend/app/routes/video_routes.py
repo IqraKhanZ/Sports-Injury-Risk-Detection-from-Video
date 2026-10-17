@@ -310,10 +310,10 @@ async def upload_video(
 
     # Validate file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
-    if file_ext not in [".mp4", ".mov", ".avi", ".mkv"]:
+    if file_ext not in [".mp4", ".mov", ".avi", ".mkv", ".webm"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid video format. Supported formats: .mp4, .mov, .avi, .mkv"
+            detail="Invalid video format. Supported formats: .mp4, .mov, .avi, .mkv, .webm"
         )
 
     # Generate unique ID and path for processed video
@@ -322,7 +322,8 @@ async def upload_video(
     os.makedirs(processed_folder, exist_ok=True)
     
     temp_input_path = os.path.join(processed_folder, f"input_{file.filename}")
-    output_filename = f"overlay_{file.filename}"
+    base_name = os.path.splitext(file.filename)[0]
+    output_filename = f"overlay_{base_name}.mp4"
     output_video_path = os.path.join(processed_folder, output_filename)
 
     # Save file locally to process
