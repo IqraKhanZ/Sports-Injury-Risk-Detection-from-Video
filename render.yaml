@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sports-injury-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dooj4emku
+      - key: CLOUDINARY_API_KEY
+        value: 793317176787249
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: MONGODB_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false

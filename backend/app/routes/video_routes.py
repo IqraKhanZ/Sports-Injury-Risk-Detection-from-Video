@@ -465,6 +465,15 @@ async def upload_video(
     _api_base = (_cfg.VITE_API_URL or "http://localhost:8000").rstrip("/")
     video_url = f"{_api_base}/storage/processed/{unique_id}/{output_filename}"
 
+    # Upload to Cloudinary if configured
+    try:
+        from app.cloudinary_service import upload_video_file
+        c_url = upload_video_file(output_path)
+        if c_url and c_url.startswith("http"):
+            video_url = c_url
+    except Exception as e:
+        print(f"[Cloudinary] video upload bypassed: {e}")
+
     # Calculate actual numeric metrics from real video landmarks
     if frame_valgus_r or frame_valgus_l:
         all_valgus = frame_valgus_r + frame_valgus_l
