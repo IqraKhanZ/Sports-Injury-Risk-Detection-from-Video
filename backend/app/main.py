@@ -56,17 +56,24 @@ os.makedirs(os.path.join(storage_dir, "processed"), exist_ok=True)
 app.mount("/storage", CORSStaticFiles(directory=storage_dir), name="storage")
 
 # CORS configuration
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+    "http://localhost",
+    "https://sports-injury-risk-detection-from-v-tau.vercel.app",
+]
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in allowed_origins:
+    allowed_origins.append(settings.FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8000",
-    ],
-    allow_origin_regex="https?://.*",
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers

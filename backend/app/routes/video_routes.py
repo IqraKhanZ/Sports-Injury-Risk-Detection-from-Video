@@ -282,15 +282,31 @@ async def upload_video(
             detail="Only accounts with the Athlete role can upload movement videos."
         )
 
-    # Fetch athlete profile to get athlete_id
+    # Fetch athlete profile to get athlete_id (or create baseline profile automatically)
     athlete_profile = await db.athlete_profiles.find_one({"email": current_user["email"]})
     if not athlete_profile:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Athlete profile does not exist. Complete your questionnaire first."
-        )
-    
-    athlete_id = athlete_profile["athlete_id"]
+        count = await db.athlete_profiles.count_documents({})
+        athlete_id = f"ATH-{1001 + count}"
+        athlete_profile = {
+            "athlete_id": athlete_id,
+            "fullname": current_user.get("fullname", "Athlete"),
+            "email": current_user["email"],
+            "sport_type": "Soccer",
+            "position": "Forward",
+            "age": 23,
+            "gender": "Male",
+            "height": 178.0,
+            "weight": 72.0,
+            "primary_sport": "Soccer",
+            "training_hours_per_week": 12.0,
+            "injury_history": "None",
+            "assigned_coach": "Coach Alex Ferguson",
+            "assigned_physio": "Dr. Sarah Jenkins",
+            "created_at": datetime.utcnow()
+        }
+        await db.athlete_profiles.insert_one(athlete_profile)
+    else:
+        athlete_id = athlete_profile["athlete_id"]
 
     # Validate file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
@@ -386,8 +402,11 @@ async def upload_video(
         running_mode=RunningMode.VIDEO,
         num_poses=1
     )
+    MAX_FRAMES = 120
     with PoseLandmarker.create_from_options(options) as landmarker:
         for frame in reader:
+            if frame_idx >= MAX_FRAMES:
+                break
             # Resize frame to downsampled dimensions for fast processing
             resized_frame = cv2.resize(frame, (target_width, target_height))
             
@@ -468,9 +487,10 @@ async def upload_video(
     # Upload to Cloudinary if configured
     try:
         from app.cloudinary_service import upload_video_file
-        c_url = upload_video_file(output_path)
+        c_url = upload_video_file(output_video_path)
         if c_url and c_url.startswith("http"):
             video_url = c_url
+            print(f"[Cloudinary] Processed video published to Cloudinary CDN: {c_url}")
     except Exception as e:
         print(f"[Cloudinary] video upload bypassed: {e}")
 
@@ -648,6 +668,8 @@ async def upload_video(
     }
     await db.telemetry_timeseries.insert_one(telemetry_doc)
 
+    if "_id" in analysis_doc:
+        analysis_doc["_id"] = str(analysis_doc["_id"])
     return analysis_doc
 
 
